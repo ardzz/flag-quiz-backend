@@ -42,9 +42,10 @@ const validate = require('../middleware/validation.middleware');
  *                 properties:
  *                   continentId:
  *                     type: integer
+ *                     nullable: true
  *                     minimum: 1
  *                     maximum: 6
- *                     description: Filter questions by continent (1-6)
+ *                     description: Filter questions by continent (1-6), or null for worldwide
  *                     example: 6
  *                   numberOfFlags:
  *                     type: integer
@@ -69,13 +70,21 @@ const validate = require('../middleware/validation.middleware');
  *               value:
  *                 templateId: "6db6d26d-e87e-489e-9cc9-e823381f5ff5"
  *             usingCustomOptions:
- *               summary: Create custom game
+ *               summary: Create custom game (South America)
  *               value:
  *                 customOptions:
  *                   numberOfFlags: 10
  *                   timePerFlag: 30
  *                   difficulty: medium
  *                   continentId: 6
+ *             worldwideGame:
+ *               summary: Create worldwide game (all continents)
+ *               value:
+ *                 customOptions:
+ *                   numberOfFlags: 20
+ *                   timePerFlag: 25
+ *                   difficulty: hard
+ *                   continentId: null
  *             usingBoth:
  *               summary: Template with custom overrides
  *               value:
@@ -169,9 +178,16 @@ router.post(
       .isIn(['easy', 'medium', 'hard'])
       .withMessage('Difficulty must be easy, medium, or hard'),
     body('customOptions.continentId')
-      .optional()
-      .isInt({ min: 1, max: 6 })
-      .withMessage('Continent ID must be between 1 and 6'),
+      .optional({ nullable: true })
+      .custom((value) => {
+        if (value === null || value === undefined) {
+          return true; // Allow null for "around the world"
+        }
+        if (Number.isInteger(value) && value >= 1 && value <= 6) {
+          return true;
+        }
+        throw new Error('Continent ID must be between 1 and 6, or null for worldwide');
+      }),
   ],
   validate,
   gameController.createGame
