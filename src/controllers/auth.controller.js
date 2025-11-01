@@ -40,8 +40,9 @@ class AuthController {
 
   async login(req, res, next) {
     try {
-      const { email, password } = req.body;
-      const result = await authService.login(email, password);
+      const { email, username, password } = req.body;
+      const identifier = email || username;
+      const result = await authService.login(identifier, password);
       
       return successResponse(res, result, 'Login successful');
     } catch (error) {

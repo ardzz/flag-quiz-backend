@@ -96,11 +96,11 @@ class AuthService {
     return user;
   }
 
-  async login(email, password) {
+  async login(identifier, password) {
     const result = await db.query(
       `SELECT id, username, email, password_hash, role, is_email_verified 
-       FROM users WHERE email = $1`,
-      [email]
+       FROM users WHERE email = $1 OR username = $1`,
+      [identifier]
     );
 
     if (result.rows.length === 0) {
@@ -136,7 +136,7 @@ class AuthService {
       [user.id, refreshToken]
     );
 
-    logger.info(`User logged in: ${email}`);
+    logger.info(`User logged in: ${user.email}`);
     
     return {
       user: {

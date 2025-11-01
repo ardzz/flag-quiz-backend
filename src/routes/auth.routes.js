@@ -112,13 +112,17 @@ router.get('/verify-email/:token', authController.verifyEmail);
  *           schema:
  *             type: object
  *             required:
- *               - email
  *               - password
  *             properties:
  *               email:
  *                 type: string
  *                 format: email
  *                 example: player@flaggame.com
+ *                 description: Email address (either email or username is required)
+ *               username:
+ *                 type: string
+ *                 example: player
+ *                 description: Username (either email or username is required)
  *               password:
  *                 type: string
  *                 example: player123
@@ -159,8 +163,15 @@ router.post(
   '/login',
   authLimiter,
   [
-    body('email').isEmail().normalizeEmail().withMessage('Invalid email address'),
+    body('email').optional().isEmail().normalizeEmail().withMessage('Invalid email address'),
+    body('username').optional().trim().isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
     body('password').notEmpty().withMessage('Password is required'),
+    body().custom((value, { req }) => {
+      if (!req.body.email && !req.body.username) {
+        throw new Error('Either email or username is required');
+      }
+      return true;
+    }),
   ],
   validate,
   authController.login
