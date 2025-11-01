@@ -23,7 +23,7 @@ const createRateLimiter = (windowMinutes = 15, maxRequests = 100) => {
   return rateLimit(limiterConfig);
 };
 
-const authLimiter = createRateLimiter(15, 5);
+const authLimiter = createRateLimiter(15, 20); // Increased from 5 to 20 for development
 const apiLimiter = createRateLimiter(15, 100);
 const strictLimiter = createRateLimiter(60, 10);
 
