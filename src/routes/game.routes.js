@@ -141,7 +141,25 @@ router.get('/', authenticateToken, gameController.getUserGames);
  *                 success:
  *                   type: boolean
  *                 data:
- *                   $ref: '#/components/schemas/Game'
+ *                   allOf:
+ *                     - $ref: '#/components/schemas/Game'
+ *                     - type: object
+ *                       properties:
+ *                         unanswered_count:
+ *                           type: integer
+ *                           description: Number of unanswered questions
+ *                           example: 5
+ *                         nextUnansweredQuestion:
+ *                           type: object
+ *                           nullable: true
+ *                           description: Next unanswered question info (null if all answered)
+ *                           properties:
+ *                             questionId:
+ *                               type: string
+ *                               format: uuid
+ *                             questionNumber:
+ *                               type: integer
+ *                               example: 3
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
@@ -190,6 +208,72 @@ router.get(
   ],
   validate,
   gameController.getQuestion
+);
+
+/**
+ * @swagger
+ * /api/v1/games/{gameId}/next-unanswered:
+ *   get:
+ *     summary: Get next unanswered question in game
+ *     tags: [Games]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: gameId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Next unanswered question or status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     hasUnanswered:
+ *                       type: boolean
+ *                       description: Whether there are unanswered questions
+ *                       example: true
+ *                     question:
+ *                       type: object
+ *                       description: Next unanswered question (only if hasUnanswered is true)
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           format: uuid
+ *                         questionNumber:
+ *                           type: integer
+ *                           example: 3
+ *                         flagUrl:
+ *                           type: string
+ *                         options:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                         timeLimit:
+ *                           type: integer
+ *                     message:
+ *                       type: string
+ *                       description: Message when no unanswered questions (only if hasUnanswered is false)
+ *                       example: All questions have been answered
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
+router.get(
+  '/:gameId/next-unanswered',
+  authenticateToken,
+  [param('gameId').isUUID().withMessage('Invalid game ID')],
+  validate,
+  gameController.getNextUnansweredQuestion
 );
 
 /**

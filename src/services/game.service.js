@@ -136,7 +136,8 @@ class GameService {
     const result = await db.query(
       `SELECT g.*, 
               COUNT(gq.id) as total_questions,
-              COUNT(gq.id) FILTER (WHERE gq.user_answer_id = gq.country_id) as correct_answers
+              COUNT(gq.id) FILTER (WHERE gq.user_answer_id = gq.country_id) as correct_answers,
+              COUNT(gq.id) FILTER (WHERE gq.user_answer_id IS NULL) as unanswered_count
        FROM games g
        LEFT JOIN game_questions gq ON g.id = gq.game_id
        WHERE g.id = $1 AND g.user_id = $2
@@ -148,7 +149,29 @@ class GameService {
       throw new Error('Game not found');
     }
 
-    return result.rows[0];
+    const game = result.rows[0];
+    
+    // Get first unanswered question if exists
+    const unansweredResult = await db.query(
+      `SELECT gq.id, gq.question_number
+       FROM game_questions gq
+       WHERE gq.game_id = $1 AND gq.user_answer_id IS NULL
+       ORDER BY gq.question_number ASC
+       LIMIT 1`,
+      [gameId]
+    );
+    
+    const nextUnansweredQuestion = unansweredResult.rows.length > 0 
+      ? {
+          questionId: unansweredResult.rows[0].id,
+          questionNumber: unansweredResult.rows[0].question_number
+        }
+      : null;
+
+    return {
+      ...game,
+      nextUnansweredQuestion
+    };
   }
 
   async getQuestion(gameId, questionNumber, userId) {
@@ -188,6 +211,53 @@ class GameService {
       options: question.options,
       timeLimit: question.time_limit,
       isAnswered: question.user_answer_id !== null,
+    };
+  }
+
+  async getNextUnansweredQuestion(gameId, userId) {
+    const gameResult = await db.query(
+      'SELECT * FROM games WHERE id = $1 AND user_id = $2',
+      [gameId, userId]
+    );
+
+    if (gameResult.rows.length === 0) {
+      throw new Error('Game not found');
+    }
+
+    const game = gameResult.rows[0];
+
+    if (game.status !== GAME_STATUS.IN_PROGRESS) {
+      throw new Error('Game is not in progress');
+    }
+
+    const questionResult = await db.query(
+      `SELECT gq.*, c.flag_url
+       FROM game_questions gq
+       JOIN countries c ON gq.country_id = c.id
+       WHERE gq.game_id = $1 AND gq.user_answer_id IS NULL
+       ORDER BY gq.question_number ASC
+       LIMIT 1`,
+      [gameId]
+    );
+
+    if (questionResult.rows.length === 0) {
+      return {
+        hasUnanswered: false,
+        message: 'All questions have been answered'
+      };
+    }
+
+    const question = questionResult.rows[0];
+
+    return {
+      hasUnanswered: true,
+      question: {
+        id: question.id,
+        questionNumber: question.question_number,
+        flagUrl: question.flag_url,
+        options: question.options,
+        timeLimit: question.time_limit,
+      }
     };
   }
 

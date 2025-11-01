@@ -45,6 +45,20 @@ class GameController {
     }
   }
 
+  async getNextUnansweredQuestion(req, res, next) {
+    try {
+      const { gameId } = req.params;
+      const result = await gameService.getNextUnansweredQuestion(gameId, req.user.id);
+      
+      res.json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async submitAnswer(req, res, next) {
     try {
       const { gameId, questionId } = req.params;
