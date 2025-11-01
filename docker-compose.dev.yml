@@ -1,0 +1,136 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: flag_game_postgres_dev
+    environment:
+      POSTGRES_DB: flag_game_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_dev_password
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./flags.csv:/data/flags.csv
+    ports:
+      - "5432:5432"
+    networks:
+      - flag_game_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: flag_game_redis_dev
+    command: redis-server --requirepass redis_dev_password
+    ports:
+      - "6379:6379"
+    networks:
+      - flag_game_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: flag_game_api_dev
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: flag_game_db
+      DB_USER: flag_game_app
+      DB_PASSWORD: your_secure_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: redis_dev_password
+      JWT_SECRET: dev_jwt_secret_change_in_production
+      JWT_REFRESH_SECRET: dev_refresh_secret_change_in_production
+      JWT_EXPIRE: 15m
+      JWT_REFRESH_EXPIRE: 7d
+      EMAIL_HOST: mailhog
+      EMAIL_PORT: 1025
+      EMAIL_SECURE: "false"
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASS: ${EMAIL_PASS:-}
+      EMAIL_FROM: Flag Guesser <noreply@flagguesser.com>
+      FRONTEND_URL: http://localhost:3001
+      MAX_FILE_SIZE: 5242880
+      UPLOAD_PATH: uploads/
+      RATE_LIMIT_WINDOW: 15
+      RATE_LIMIT_MAX: 100
+      DEFAULT_PAGE_SIZE: 20
+      MAX_PAGE_SIZE: 100
+    ports:
+      - "3000:3000"
+      - "9229:9229"  # Debug port
+    volumes:
+      - ./src:/app/src
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+      - /app/node_modules  # Prevent overwriting node_modules
+    networks:
+      - flag_game_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: npm run dev
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: flag_game_pgadmin_dev
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@flaggame.com
+      PGADMIN_DEFAULT_PASSWORD: admin_dev_password
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data_dev:/var/lib/pgadmin
+    networks:
+      - flag_game_network
+    depends_on:
+      - postgres
+
+  # Optional: Redis Commander for Redis GUI
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: flag_game_redis_commander_dev
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:redis_dev_password
+    ports:
+      - "8081:8081"
+    networks:
+      - flag_game_network
+    depends_on:
+      - redis
+
+  # Optional: Mailhog for email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: flag_game_mailhog_dev
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    networks:
+      - flag_game_network
+
+volumes:
+  postgres_data_dev:
+    driver: local
+  pgadmin_data_dev:
+    driver: local
+
+networks:
+  flag_game_network:
+    driver: bridge
