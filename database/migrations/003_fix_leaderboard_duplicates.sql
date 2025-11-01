@@ -1,5 +1,5 @@
 -- Fix leaderboard duplicate entries issue
--- This migration cleans up duplicates and adds proper unique indexes for NULL continent_id
+-- This migration cleans up duplicates and adds proper unique indexes using COALESCE
 
 -- Step 1: Clean up existing duplicates (keep highest score for each user)
 
@@ -47,18 +47,18 @@ WHERE id NOT IN (
   ) t
 );
 
--- Step 2: Add partial unique indexes to handle NULL continent_id properly
--- PostgreSQL doesn't consider NULL values as equal in unique constraints,
--- so we need partial indexes for the global leaderboard (continent_id IS NULL)
+-- Step 2: Create unique indexes using COALESCE to handle NULL properly
+-- Using COALESCE(continent_id, -1) treats NULL as -1, making it work with unique constraints
 
-CREATE UNIQUE INDEX IF NOT EXISTS leaderboard_alltime_user_global_unique 
-  ON leaderboard_alltime (user_id) WHERE continent_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS leaderboard_daily_unique_idx 
+  ON leaderboard_daily (user_id, date, COALESCE(continent_id, -1));
 
-CREATE UNIQUE INDEX IF NOT EXISTS leaderboard_daily_user_date_global_unique 
-  ON leaderboard_daily (user_id, date) WHERE continent_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS leaderboard_weekly_unique_idx 
+  ON leaderboard_weekly (user_id, week_start, COALESCE(continent_id, -1));
 
-CREATE UNIQUE INDEX IF NOT EXISTS leaderboard_weekly_user_week_global_unique 
-  ON leaderboard_weekly (user_id, week_start) WHERE continent_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS leaderboard_monthly_unique_idx 
+  ON leaderboard_monthly (user_id, month, year, COALESCE(continent_id, -1));
 
-CREATE UNIQUE INDEX IF NOT EXISTS leaderboard_monthly_user_month_year_global_unique 
-  ON leaderboard_monthly (user_id, month, year) WHERE continent_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS leaderboard_alltime_unique_idx 
+  ON leaderboard_alltime (user_id, COALESCE(continent_id, -1));
+
