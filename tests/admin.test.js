@@ -28,10 +28,6 @@ describe('Admin API', () => {
     userId = playerResponse.body.data.user.id;
   });
 
-  afterAll(async () => {
-    await db.end();
-  });
-
   describe('GET /api/v1/admin/users', () => {
     test('should get all users as admin', async () => {
       const response = await request(app)

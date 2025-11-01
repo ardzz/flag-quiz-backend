@@ -234,7 +234,7 @@ router.post(
  */
 router.post(
   '/logout',
-  [body('refreshToken').notEmpty().withMessage('Refresh token is required')],
+  [body('refreshToken').optional()],
   validate,
   authController.logout
 );

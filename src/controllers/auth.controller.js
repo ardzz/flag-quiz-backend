@@ -1,20 +1,21 @@
 const authService = require('../services/auth.service');
 const logger = require('../utils/logger');
+const { successResponse } = require('../utils/response');
 
 class AuthController {
   async register(req, res, next) {
     try {
       const { username, email, password } = req.body;
-      const user = await authService.register(username, email, password);
+      const result = await authService.register(username, email, password);
       
-      res.status(201).json({
-        message: 'Registration successful. Please check your email to verify your account.',
+      return successResponse(res, {
         user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
+          id: result.user.id,
+          username: result.user.username,
+          email: result.user.email,
         },
-      });
+        tokens: result.tokens
+      }, 'Registration successful. Please check your email to verify your account.', 201);
     } catch (error) {
       next(error);
     }
@@ -25,14 +26,13 @@ class AuthController {
       const { token } = req.params;
       const user = await authService.verifyEmail(token);
       
-      res.json({
-        message: 'Email verified successfully',
+      return successResponse(res, {
         user: {
           id: user.id,
           username: user.username,
           email: user.email,
-        },
-      });
+        }
+      }, 'Email verified successfully');
     } catch (error) {
       next(error);
     }
@@ -43,10 +43,7 @@ class AuthController {
       const { email, password } = req.body;
       const result = await authService.login(email, password);
       
-      res.json({
-        message: 'Login successful',
-        ...result,
-      });
+      return successResponse(res, result, 'Login successful');
     } catch (error) {
       next(error);
     }
@@ -57,7 +54,7 @@ class AuthController {
       const { refreshToken } = req.body;
       const result = await authService.refreshToken(refreshToken);
       
-      res.json(result);
+      return successResponse(res, result, 'Token refreshed successfully');
     } catch (error) {
       next(error);
     }
@@ -66,9 +63,12 @@ class AuthController {
   async logout(req, res, next) {
     try {
       const { refreshToken } = req.body;
-      await authService.logout(refreshToken);
       
-      res.json({ message: 'Logout successful' });
+      if (refreshToken) {
+        await authService.logout(refreshToken);
+      }
+      
+      return successResponse(res, null, 'Logout successful');
     } catch (error) {
       next(error);
     }
@@ -79,9 +79,7 @@ class AuthController {
       const { email } = req.body;
       await authService.forgotPassword(email);
       
-      res.json({
-        message: 'If the email exists, a password reset link has been sent',
-      });
+      return successResponse(res, null, 'If the email exists, a password reset link has been sent');
     } catch (error) {
       next(error);
     }
@@ -92,7 +90,7 @@ class AuthController {
       const { token, password } = req.body;
       await authService.resetPassword(token, password);
       
-      res.json({ message: 'Password reset successful' });
+      return successResponse(res, null, 'Password reset successful');
     } catch (error) {
       next(error);
     }

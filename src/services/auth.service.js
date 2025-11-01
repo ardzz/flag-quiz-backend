@@ -20,8 +20,30 @@ class AuthService {
       const result = await client.query(
         `INSERT INTO users (username, email, password_hash, email_verification_token, email_verification_expires)
          VALUES ($1, $2, $3, $4, $5)
-         RETURNING id, username, email, created_at`,
+         RETURNING id, username, email, role, is_email_verified, created_at`,
         [username, email, passwordHash, verificationToken, verificationExpires]
+      );
+
+      const user = result.rows[0];
+
+      // Generate tokens
+      const accessToken = jwt.sign(
+        { userId: user.id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRE }
+      );
+
+      const refreshToken = jwt.sign(
+        { userId: user.id },
+        process.env.JWT_REFRESH_SECRET,
+        { expiresIn: process.env.JWT_REFRESH_EXPIRE }
+      );
+
+      // Save refresh token in session
+      await client.query(
+        `INSERT INTO user_sessions (user_id, refresh_token, expires_at)
+         VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
+        [user.id, refreshToken]
       );
 
       await emailService.sendVerificationEmail(email, verificationToken, username);
@@ -29,7 +51,20 @@ class AuthService {
       await client.query('COMMIT');
       
       logger.info(`User registered: ${email}`);
-      return result.rows[0];
+      
+      return {
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          isEmailVerified: user.is_email_verified,
+        },
+        tokens: {
+          accessToken,
+          refreshToken,
+        }
+      };
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -69,14 +104,18 @@ class AuthService {
     );
 
     if (result.rows.length === 0) {
-      throw new Error('Invalid credentials');
+      const error = new Error('Invalid credentials');
+      error.statusCode = 401;
+      throw error;
     }
 
     const user = result.rows[0];
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {
-      throw new Error('Invalid credentials');
+      const error = new Error('Invalid credentials');
+      error.statusCode = 401;
+      throw error;
     }
 
     const accessToken = jwt.sign(
@@ -100,8 +139,6 @@ class AuthService {
     logger.info(`User logged in: ${email}`);
     
     return {
-      accessToken,
-      refreshToken,
       user: {
         id: user.id,
         username: user.username,
@@ -109,6 +146,10 @@ class AuthService {
         role: user.role,
         isEmailVerified: user.is_email_verified,
       },
+      tokens: {
+        accessToken,
+        refreshToken,
+      }
     };
   }
 

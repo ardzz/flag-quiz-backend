@@ -29,7 +29,6 @@ describe('Game API', () => {
       await db.query('DELETE FROM game_questions WHERE game_id = $1', [gameId]);
       await db.query('DELETE FROM games WHERE id = $1', [gameId]);
     }
-    await db.end();
   });
 
   describe('POST /api/v1/games', () => {

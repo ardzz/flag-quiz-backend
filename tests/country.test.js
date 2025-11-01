@@ -1,11 +1,7 @@
 const request = require('supertest');
 const app = require('../src/app');
-const db = require('../src/config/database');
 
 describe('Countries API', () => {
-  afterAll(async () => {
-    await db.end();
-  });
 
   describe('GET /api/v1/countries', () => {
     test('should get all countries with pagination', async () => {

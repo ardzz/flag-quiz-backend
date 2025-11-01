@@ -1,11 +1,7 @@
 const request = require('supertest');
 const app = require('../src/app');
-const db = require('../src/config/database');
 
 describe('API Health and General Tests', () => {
-  afterAll(async () => {
-    await db.end();
-  });
 
   describe('Health Checks', () => {
     test('GET /health should return 200', async () => {

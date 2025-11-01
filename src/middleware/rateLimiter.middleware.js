@@ -3,16 +3,24 @@ const { default: RedisStore } = require('rate-limit-redis');
 const redis = require('../config/redis');
 
 const createRateLimiter = (windowMinutes = 15, maxRequests = 100) => {
-  return rateLimit({
+  const limiterConfig = {
     windowMs: windowMinutes * 60 * 1000,
     max: maxRequests,
     standardHeaders: true,
     legacyHeaders: false,
-    store: new RedisStore({
-      sendCommand: (...args) => redis.call(...args),
-    }),
     message: 'Too many requests from this IP, please try again later.',
-  });
+    skipFailedRequests: false,
+    skipSuccessfulRequests: false,
+  };
+
+  // Only use Redis store in non-test environments
+  if (process.env.NODE_ENV !== 'test') {
+    limiterConfig.store = new RedisStore({
+      sendCommand: (...args) => redis.call(...args),
+    });
+  }
+
+  return rateLimit(limiterConfig);
 };
 
 const authLimiter = createRateLimiter(15, 5);

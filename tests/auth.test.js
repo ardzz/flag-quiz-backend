@@ -16,7 +16,6 @@ describe('Authentication API', () => {
     if (testUser.email) {
       await db.query('DELETE FROM users WHERE email = $1', [testUser.email]);
     }
-    await db.end();
   });
 
   describe('POST /api/v1/auth/register', () => {

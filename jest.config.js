@@ -20,4 +20,5 @@ module.exports = {
       statements: 70,
     },
   },
+  setupFiles: ['<rootDir>/tests/jest.env.js'],
 };

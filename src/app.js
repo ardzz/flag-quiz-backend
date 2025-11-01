@@ -91,24 +91,27 @@ app.use(`/api/${API_VERSION}/admin`, adminRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-const server = app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
-});
-
-const gracefulShutdown = () => {
-  logger.info('Received shutdown signal, closing server gracefully...');
-  server.close(() => {
-    logger.info('Server closed');
-    process.exit(0);
+// Only start server if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  const server = app.listen(PORT, () => {
+    logger.info(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
   });
 
-  setTimeout(() => {
-    logger.error('Forced shutdown after timeout');
-    process.exit(1);
-  }, 10000);
-};
+  const gracefulShutdown = () => {
+    logger.info('Received shutdown signal, closing server gracefully...');
+    server.close(() => {
+      logger.info('Server closed');
+      process.exit(0);
+    });
 
-process.on('SIGTERM', gracefulShutdown);
-process.on('SIGINT', gracefulShutdown);
+    setTimeout(() => {
+      logger.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
+}
 
 module.exports = app;

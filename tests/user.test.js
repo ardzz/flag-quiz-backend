@@ -18,10 +18,6 @@ describe('User API', () => {
     userId = response.body.data.user.id;
   });
 
-  afterAll(async () => {
-    await db.end();
-  });
-
   describe('GET /api/v1/users/profile', () => {
     test('should get current user profile', async () => {
       const response = await request(app)

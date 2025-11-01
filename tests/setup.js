@@ -1,4 +1,5 @@
 const db = require('../src/config/database');
+const seedTestData = require('../scripts/seed-test-data');
 
 // Global test setup
 beforeAll(async () => {
@@ -6,17 +7,29 @@ beforeAll(async () => {
   try {
     await db.query('SELECT 1');
     console.log('✓ Test database connected');
+    
+    // Seed test data
+    console.log('\nSeeding test data...');
+    await seedTestData();
+    
   } catch (error) {
-    console.error('✗ Test database connection failed:', error.message);
+    console.error('✗ Test setup failed:', error.message);
     throw error;
   }
 });
 
-// Global test teardown
+// Global test teardown - only close once at the very end
 afterAll(async () => {
   // Close all database connections
-  await db.end();
-  console.log('✓ Test database connections closed');
+  try {
+    await db.end();
+    console.log('✓ Test database connections closed');
+  } catch (error) {
+    // Ignore error if pool already closed
+    if (!error.message.includes('Called end on pool more than once')) {
+      console.error('Error closing database:', error.message);
+    }
+  }
 });
 
 // Increase timeout for integration tests

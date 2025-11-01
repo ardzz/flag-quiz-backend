@@ -32,7 +32,6 @@ describe('Game Templates API', () => {
     if (templateId) {
       await db.query('DELETE FROM game_templates WHERE id = $1', [templateId]);
     }
-    await db.end();
   });
 
   describe('GET /api/v1/game-templates', () => {
