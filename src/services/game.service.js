@@ -16,10 +16,9 @@ class GameService {
       const activeGameCheck = await client.query(
         `SELECT g.*, 
                 COUNT(DISTINCT q.id) as total_questions,
-                COUNT(DISTINCT CASE WHEN ga.is_correct IS NOT NULL THEN ga.id END) as answered_questions
+                COUNT(DISTINCT CASE WHEN q.user_answer_id IS NOT NULL THEN q.id END) as answered_questions
          FROM games g
          LEFT JOIN game_questions q ON q.game_id = g.id
-         LEFT JOIN game_answers ga ON ga.question_id = q.id
          WHERE g.user_id = $1 AND g.status = $2
          GROUP BY g.id
          LIMIT 1`,
