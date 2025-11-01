@@ -10,37 +10,78 @@ const validate = require('../middleware/validation.middleware');
  * /api/v1/games:
  *   post:
  *     summary: Create a new game
- *     description: Creates a new game. Players cannot create a new game if they have an in-progress game. They must complete or abandon the current game first.
+ *     description: |
+ *       Creates a new game. Players cannot create a new game if they have an in-progress game. 
+ *       They must complete or abandon the current game first.
+ *       
+ *       **Note:** You must provide either `templateId` OR `customOptions` (or both).
+ *       - Use `templateId` alone to create a game from a template
+ *       - Use `customOptions` alone to create a custom game
+ *       - Use both to override template settings with custom options
  *     tags: [Games]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
- *       required: false
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             oneOf:
+ *               - required: [templateId]
+ *               - required: [customOptions]
  *             properties:
  *               templateId:
  *                 type: string
  *                 format: uuid
- *                 description: Game template ID (optional)
+ *                 description: Game template ID (optional if customOptions provided)
+ *                 example: "6db6d26d-e87e-489e-9cc9-e823381f5ff5"
  *               customOptions:
  *                 type: object
+ *                 description: Custom game configuration (optional if templateId provided)
  *                 properties:
  *                   continentId:
  *                     type: integer
- *                     example: 1
+ *                     minimum: 1
+ *                     maximum: 6
+ *                     description: Filter questions by continent (1-6)
+ *                     example: 6
  *                   numberOfFlags:
  *                     type: integer
+ *                     minimum: 1
+ *                     maximum: 50
+ *                     description: Number of questions (1-50)
  *                     example: 10
  *                   timePerFlag:
  *                     type: integer
+ *                     minimum: 5
+ *                     maximum: 300
+ *                     description: Time per question in seconds (5-300)
  *                     example: 30
  *                   difficulty:
  *                     type: string
  *                     enum: [easy, medium, hard]
+ *                     description: Game difficulty level
  *                     example: medium
+ *           examples:
+ *             usingTemplate:
+ *               summary: Create game from template
+ *               value:
+ *                 templateId: "6db6d26d-e87e-489e-9cc9-e823381f5ff5"
+ *             usingCustomOptions:
+ *               summary: Create custom game
+ *               value:
+ *                 customOptions:
+ *                   numberOfFlags: 10
+ *                   timePerFlag: 30
+ *                   difficulty: medium
+ *                   continentId: 6
+ *             usingBoth:
+ *               summary: Template with custom overrides
+ *               value:
+ *                 templateId: "6db6d26d-e87e-489e-9cc9-e823381f5ff5"
+ *                 customOptions:
+ *                   continentId: 2
  *     responses:
  *       201:
  *         description: Game created successfully
@@ -99,8 +140,38 @@ router.post(
   authenticateToken,
   requireEmailVerified,
   [
-    body('templateId').optional().isUUID().withMessage('Invalid template ID'),
-    body('customOptions').optional().isObject().withMessage('Custom options must be an object'),
+    body('templateId')
+      .optional()
+      .isUUID()
+      .withMessage('Invalid template ID'),
+    body('customOptions')
+      .optional()
+      .isObject()
+      .withMessage('Custom options must be an object'),
+    body()
+      .custom((value, { req }) => {
+        // At least one of templateId or customOptions must be provided
+        if (!req.body.templateId && !req.body.customOptions) {
+          throw new Error('Either templateId or customOptions must be provided');
+        }
+        return true;
+      }),
+    body('customOptions.numberOfFlags')
+      .optional()
+      .isInt({ min: 1, max: 50 })
+      .withMessage('Number of flags must be between 1 and 50'),
+    body('customOptions.timePerFlag')
+      .optional()
+      .isInt({ min: 5, max: 300 })
+      .withMessage('Time per flag must be between 5 and 300 seconds'),
+    body('customOptions.difficulty')
+      .optional()
+      .isIn(['easy', 'medium', 'hard'])
+      .withMessage('Difficulty must be easy, medium, or hard'),
+    body('customOptions.continentId')
+      .optional()
+      .isInt({ min: 1, max: 6 })
+      .withMessage('Continent ID must be between 1 and 6'),
   ],
   validate,
   gameController.createGame
