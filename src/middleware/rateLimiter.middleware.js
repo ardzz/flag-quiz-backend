@@ -23,13 +23,17 @@ const createRateLimiter = (windowMinutes = 15, maxRequests = 100) => {
   return rateLimit(limiterConfig);
 };
 
-const authLimiter = createRateLimiter(15, 20); // Increased from 5 to 20 for development
-const apiLimiter = createRateLimiter(15, 100);
-const strictLimiter = createRateLimiter(60, 10);
+const authLimiter = createRateLimiter(15, 20); // 20 requests per 15 minutes for auth endpoints
+const apiLimiter = createRateLimiter(15, 500); // 500 requests per 15 minutes for general API
+const gameLimiter = createRateLimiter(5, 200); // 200 requests per 5 minutes for game play
+const publicLimiter = createRateLimiter(15, 1000); // 1000 requests per 15 minutes for public endpoints
+const strictLimiter = createRateLimiter(60, 10); // 10 requests per hour for sensitive operations
 
 module.exports = {
   createRateLimiter,
   authLimiter,
   apiLimiter,
+  gameLimiter,
+  publicLimiter,
   strictLimiter,
 };
