@@ -8,7 +8,8 @@ const authenticateToken = async (req, res, next) => {
     const token = authHeader && authHeader.split(' ')[1];
 
     if (!token) {
-      return res.status(401).json({ error: 'Access token required' });
+      logger.warn('Access token missing');
+      return res.status(401).json({ success: false, error: 'Access token required' });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -19,30 +20,38 @@ const authenticateToken = async (req, res, next) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'User not found' });
+      logger.warn(`User not found for userId: ${decoded.userId}`);
+      return res.status(401).json({ success: false, error: 'User not found' });
     }
 
     req.user = result.rows[0];
     next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ error: 'Token expired' });
+      logger.warn('Token expired');
+      return res.status(401).json({ success: false, error: 'Token expired' });
+    }
+    if (error.name === 'JsonWebTokenError') {
+      logger.warn('Invalid token format:', error.message);
+      return res.status(403).json({ success: false, error: 'Invalid token' });
     }
     logger.error('Auth middleware error:', error);
-    return res.status(403).json({ error: 'Invalid token' });
+    return res.status(403).json({ success: false, error: 'Invalid token' });
   }
 };
 
 const requireEmailVerified = (req, res, next) => {
   if (!req.user.is_email_verified) {
-    return res.status(403).json({ error: 'Email verification required' });
+    logger.warn(`Email not verified for user: ${req.user.id}`);
+    return res.status(403).json({ success: false, error: 'Email verification required' });
   }
   next();
 };
 
 const requireAdmin = (req, res, next) => {
   if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Admin access required' });
+    logger.warn(`Admin access denied for user: ${req.user.id}`);
+    return res.status(403).json({ success: false, error: 'Admin access required' });
   }
   next();
 };
