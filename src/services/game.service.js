@@ -3,6 +3,7 @@ const { shuffleArray, calculatePoints } = require('../utils/helpers');
 const { GAME_STATUS } = require('../config/constants');
 const cacheService = require('./cache.service');
 const logger = require('../utils/logger');
+const { GameInProgressError } = require('../utils/errors');
 
 class GameService {
   async createGame(userId, templateId, customOptions = null) {
@@ -13,14 +14,34 @@ class GameService {
 
       // Check if user has any active (in-progress) games
       const activeGameCheck = await client.query(
-        `SELECT id, status FROM games 
-         WHERE user_id = $1 AND status = $2
+        `SELECT g.*, 
+                COUNT(DISTINCT q.id) as total_questions,
+                COUNT(DISTINCT CASE WHEN ga.is_correct IS NOT NULL THEN ga.id END) as answered_questions
+         FROM games g
+         LEFT JOIN game_questions q ON q.game_id = g.id
+         LEFT JOIN game_answers ga ON ga.question_id = q.id
+         WHERE g.user_id = $1 AND g.status = $2
+         GROUP BY g.id
          LIMIT 1`,
         [userId, GAME_STATUS.IN_PROGRESS]
       );
 
       if (activeGameCheck.rows.length > 0) {
-        throw new Error('You already have a game in progress. Please complete or abandon it before starting a new one.');
+        const activeGame = activeGameCheck.rows[0];
+        throw new GameInProgressError(
+          'You already have a game in progress. Please complete or abandon it before starting a new one.',
+          {
+            id: activeGame.id,
+            status: activeGame.status,
+            score: activeGame.score,
+            correctAnswers: activeGame.correct_answers,
+            totalQuestions: parseInt(activeGame.total_questions),
+            answeredQuestions: parseInt(activeGame.answered_questions),
+            difficulty: activeGame.difficulty,
+            continentId: activeGame.continent_id,
+            createdAt: activeGame.created_at,
+          }
+        );
       }
 
       let gameConfig;

@@ -9,6 +9,15 @@ const errorHandler = (err, req, res, next) => {
     user: req.user?.id,
   });
 
+  // Handle GameInProgressError with active game data
+  if (err.name === 'GameInProgressError') {
+    return res.status(err.statusCode).json({
+      success: false,
+      error: err.message,
+      activeGame: err.activeGame,
+    });
+  }
+
   if (err.name === 'ValidationError') {
     return res.status(400).json({
       success: false,

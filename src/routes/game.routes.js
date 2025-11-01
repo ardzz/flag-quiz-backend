@@ -66,6 +66,31 @@ const validate = require('../middleware/validation.middleware');
  *                 error:
  *                   type: string
  *                   example: You already have a game in progress. Please complete or abandon it before starting a new one.
+ *                 activeGame:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     status:
+ *                       type: string
+ *                       example: in_progress
+ *                     score:
+ *                       type: integer
+ *                     correctAnswers:
+ *                       type: integer
+ *                     totalQuestions:
+ *                       type: integer
+ *                     answeredQuestions:
+ *                       type: integer
+ *                     difficulty:
+ *                       type: string
+ *                     continentId:
+ *                       type: integer
+ *                       nullable: true
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */
