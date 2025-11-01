@@ -398,37 +398,84 @@ class GameService {
   async updateLeaderboards(userId, score, continentId, client) {
     const today = new Date().toISOString().split('T')[0];
     
-    await client.query(
-      `INSERT INTO leaderboard_daily (user_id, score, date, continent_id)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (user_id, date, continent_id) 
-       DO UPDATE SET score = leaderboard_daily.score + $2`,
-      [userId, score, today, continentId || null]
-    );
+    // Handle NULL continent_id properly in ON CONFLICT
+    const continentValue = continentId || null;
+    
+    // Daily leaderboard
+    if (continentValue === null) {
+      await client.query(
+        `INSERT INTO leaderboard_daily (user_id, score, date, continent_id)
+         VALUES ($1, $2, $3, NULL)
+         ON CONFLICT (user_id, date) WHERE continent_id IS NULL
+         DO UPDATE SET score = leaderboard_daily.score + $2`,
+        [userId, score, today]
+      );
+    } else {
+      await client.query(
+        `INSERT INTO leaderboard_daily (user_id, score, date, continent_id)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (user_id, date, continent_id) 
+         DO UPDATE SET score = leaderboard_daily.score + $2`,
+        [userId, score, today, continentValue]
+      );
+    }
 
-    await client.query(
-      `INSERT INTO leaderboard_weekly (user_id, score, week_start, continent_id)
-       VALUES ($1, $2, DATE_TRUNC('week', NOW()), $3)
-       ON CONFLICT (user_id, week_start, continent_id)
-       DO UPDATE SET score = leaderboard_weekly.score + $2`,
-      [userId, score, continentId || null]
-    );
+    // Weekly leaderboard
+    if (continentValue === null) {
+      await client.query(
+        `INSERT INTO leaderboard_weekly (user_id, score, week_start, continent_id)
+         VALUES ($1, $2, DATE_TRUNC('week', NOW()), NULL)
+         ON CONFLICT (user_id, week_start) WHERE continent_id IS NULL
+         DO UPDATE SET score = leaderboard_weekly.score + $2`,
+        [userId, score]
+      );
+    } else {
+      await client.query(
+        `INSERT INTO leaderboard_weekly (user_id, score, week_start, continent_id)
+         VALUES ($1, $2, DATE_TRUNC('week', NOW()), $3)
+         ON CONFLICT (user_id, week_start, continent_id)
+         DO UPDATE SET score = leaderboard_weekly.score + $2`,
+        [userId, score, continentValue]
+      );
+    }
 
-    await client.query(
-      `INSERT INTO leaderboard_monthly (user_id, score, month, year, continent_id)
-       VALUES ($1, $2, EXTRACT(MONTH FROM NOW()), EXTRACT(YEAR FROM NOW()), $3)
-       ON CONFLICT (user_id, month, year, continent_id)
-       DO UPDATE SET score = leaderboard_monthly.score + $2`,
-      [userId, score, continentId || null]
-    );
+    // Monthly leaderboard
+    if (continentValue === null) {
+      await client.query(
+        `INSERT INTO leaderboard_monthly (user_id, score, month, year, continent_id)
+         VALUES ($1, $2, EXTRACT(MONTH FROM NOW()), EXTRACT(YEAR FROM NOW()), NULL)
+         ON CONFLICT (user_id, month, year) WHERE continent_id IS NULL
+         DO UPDATE SET score = leaderboard_monthly.score + $2`,
+        [userId, score]
+      );
+    } else {
+      await client.query(
+        `INSERT INTO leaderboard_monthly (user_id, score, month, year, continent_id)
+         VALUES ($1, $2, EXTRACT(MONTH FROM NOW()), EXTRACT(YEAR FROM NOW()), $3)
+         ON CONFLICT (user_id, month, year, continent_id)
+         DO UPDATE SET score = leaderboard_monthly.score + $2`,
+        [userId, score, continentValue]
+      );
+    }
 
-    await client.query(
-      `INSERT INTO leaderboard_alltime (user_id, score, continent_id)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (user_id, continent_id)
-       DO UPDATE SET score = leaderboard_alltime.score + $2`,
-      [userId, score, continentId || null]
-    );
+    // All-time leaderboard
+    if (continentValue === null) {
+      await client.query(
+        `INSERT INTO leaderboard_alltime (user_id, score, continent_id)
+         VALUES ($1, $2, NULL)
+         ON CONFLICT (user_id) WHERE continent_id IS NULL
+         DO UPDATE SET score = leaderboard_alltime.score + $2`,
+        [userId, score]
+      );
+    } else {
+      await client.query(
+        `INSERT INTO leaderboard_alltime (user_id, score, continent_id)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id, continent_id)
+         DO UPDATE SET score = leaderboard_alltime.score + $2`,
+        [userId, score, continentValue]
+      );
+    }
   }
 
   async updateStatistics(userId, game, client) {
