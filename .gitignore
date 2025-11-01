@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.development
+.env.local
+uploads/*
+!uploads/.gitkeep
+coverage/
+*.log
+logs/*.log
+.DS_Store
+dist/
+build/
+.idea/
+
+# Ignore all markdown files except README.md
+*.md
+!README.md
