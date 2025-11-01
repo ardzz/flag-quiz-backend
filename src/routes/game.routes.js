@@ -242,15 +242,26 @@ router.get(
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 data:
  *                   type: object
  *                   properties:
- *                     correct:
+ *                     isCorrect:
  *                       type: boolean
- *                     pointsEarned:
+ *                       description: Whether the answer was correct
+ *                       example: true
+ *                     correctAnswerId:
  *                       type: integer
- *                     correctAnswer:
- *                       type: object
+ *                       description: The ID of the correct country
+ *                       example: 45
+ *                     points:
+ *                       type: integer
+ *                       description: Points earned for this answer
+ *                       example: 85
+ *                     totalScore:
+ *                       type: integer
+ *                       description: Updated total game score
+ *                       example: 85
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  */
