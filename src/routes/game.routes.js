@@ -10,6 +10,7 @@ const validate = require('../middleware/validation.middleware');
  * /api/v1/games:
  *   post:
  *     summary: Create a new game
+ *     description: Creates a new game. Players cannot create a new game if they have an in-progress game. They must complete or abandon the current game first.
  *     tags: [Games]
  *     security:
  *       - bearerAuth: []
@@ -52,6 +53,19 @@ const validate = require('../middleware/validation.middleware');
  *                   type: boolean
  *                 data:
  *                   $ref: '#/components/schemas/Game'
+ *       400:
+ *         description: Bad request - User already has a game in progress
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: You already have a game in progress. Please complete or abandon it before starting a new one.
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */

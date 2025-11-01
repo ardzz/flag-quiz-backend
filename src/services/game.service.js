@@ -11,6 +11,18 @@ class GameService {
     try {
       await client.query('BEGIN');
 
+      // Check if user has any active (in-progress) games
+      const activeGameCheck = await client.query(
+        `SELECT id, status FROM games 
+         WHERE user_id = $1 AND status = $2
+         LIMIT 1`,
+        [userId, GAME_STATUS.IN_PROGRESS]
+      );
+
+      if (activeGameCheck.rows.length > 0) {
+        throw new Error('You already have a game in progress. Please complete or abandon it before starting a new one.');
+      }
+
       let gameConfig;
       if (templateId) {
         // Get template from database

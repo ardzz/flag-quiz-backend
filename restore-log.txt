@@ -1,0 +1,94 @@
+Restoring flag URLs from flags.csv...
+
+Connecting to database...
+Γ£ô Database connected
+
+Reading flags.csv...
+Γ£ô CSV file read (21368 bytes)
+
+Found 195 lines
+
+Γ£ô Updated: Afghanistan
+Γ£ô Updated: Albania
+Γ£ô Updated: Algeria
+Γ£ô Updated: American Samoa
+Γ£ô Updated: Andorra
+Γ£ô Updated: Angola
+Γ£ô Updated: Anguilla
+Γ£ô Updated: Antigua Barbuda
+Γ£ô Updated: Argentina
+Γ£ô Updated: Australia
+Γ£ô Updated: Austria
+Γ£ô Updated: Bahamas
+Γ£ô Updated: Bahrain
+Γ£ô Updated: Bangladesh
+Γ£ô Updated: Barbados
+Γ£ô Updated: Belgium
+Γ£ô Updated: Belize
+Γ£ô Updated: Benin
+Γ£ô Updated: Bermuda
+Γ£ô Updated: Bhutan
+Γ£ô Updated: Bolivia
+Γ£ô Updated: Botswana
+Γ£ô Updated: Brazil
+Γ£ô Updated: British Virgin Isles
+Γ£ô Updated: Brunei
+Γ£ô Updated: Bulgaria
+Γ£ô Updated: Burkina
+Γ£ô Updated: Burma
+Γ£ô Updated: Burundi
+Γ£ô Updated: Cameroon
+Γ£ô Updated: Canada
+Γ£ô Updated: Cape Verde Islands
+Γ£ô Updated: Cayman Islands
+Γ£ô Updated: Central African Republic
+Γ£ô Updated: Chad
+Γ£ô Updated: Chile
+Γ£ô Updated: China
+Γ£ô Updated: Colombia
+Γ£ô Updated: Comorro Islands
+Γ£ô Updated: Congo
+Γ£ô Updated: Cook Islands
+Γ£ô Updated: Costa Rica
+Γ£ô Updated: Cuba
+Γ£ô Updated: Cyprus
+Γ£ô Updated: Czechoslovakia
+Γ£ô Updated: Denmark
+Γ£ô Updated: Djibouti
+Γ£ô Updated: Dominica
+Γ£ô Updated: Dominican Republic
+Γ£ô Updated: Ecuador
+Γ£ô Updated: Egypt
+Γ£ô Updated: El Salvador
+Γ£ô Updated: Equatorial Guinea
+Γ£ô Updated: Ethiopia
+Γ£ô Updated: Faeroes
+Γ£ô Updated: Falklands Malvinas
+Γ£ô Updated: Fiji
+Γ£ô Updated: Finland
+Γ£ô Updated: France
+Γ£ô Updated: French Guiana
+Γ£ô Updated: French Polynesia
+Γ£ô Updated: Gabon
+Γ£ô Updated: Gambia
+Γ£ô Updated: Germany DDR
+Γ£ô Updated: Germany FRG
+Γ£ô Updated: Ghana
+Γ£ô Updated: Gibraltar
+Γ£ô Updated: Greece
+Γ£ô Updated: Greenland
+Γ£ô Updated: Grenada
+Γ£ô Updated: Guam
+Γ£ô Updated: Guatemala
+Γ£ô Updated: Guinea
+Γ£ô Updated: Guinea Bissau
+Γ£ô Updated: Guyana
+
+============================================================
+Summary:
+  Updated:   75
+  Not found: 0
+  Errors:    0
+============================================================
+
+Γ£ô Script completed
